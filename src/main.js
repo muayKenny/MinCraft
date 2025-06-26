@@ -4,6 +4,7 @@ import { World } from './world';
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { setupUI } from './ui';
 import { Player } from './player';
+import { Physics } from './physics';
 
 // renderer
 const renderer = new THREE.WebGLRenderer();
@@ -36,6 +37,7 @@ document.body.appendChild(stats.dom);
 const scene = new THREE.Scene();
 
 const player = new Player(scene);
+const physics = new Physics(scene);
 
 function setupLights() {
   const sun = new THREE.DirectionalLight();
@@ -68,9 +70,11 @@ scene.add(world);
 // render loop
 let previousTime = performance.now();
 function animate() {
-  const currentTime = performance.now();
-  const dt = currentTime - previousTime;
   requestAnimationFrame(animate);
+  const currentTime = performance.now();
+  const dt = (currentTime - previousTime) / 1000;
+  physics.update(dt, player, world);
+
   player.applyInputs(dt);
   stats.update();
   renderer.render(
@@ -90,5 +94,5 @@ window.addEventListener('resize', () => {
 });
 
 setupLights();
-setupUI(world, player);
+setupUI(world, player, physics);
 animate();
