@@ -48,6 +48,7 @@ function setupLights() {
   sun.shadow.camera.near = 0.1;
   sun.shadow.camera.far = 200;
   sun.shadow.bias = -0.001;
+  sun.shadow.mapSize = new THREE.Vector2(512, 512);
   scene.add(sun);
 
   // scene.add(new THREE.CameraHelper(sun.shadow.camera));
