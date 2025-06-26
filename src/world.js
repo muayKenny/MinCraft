@@ -1,39 +1,53 @@
 import * as THREE from 'three';
-import { SimplexNoise } from 'three/examples/jsm/Addons.js';
+import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js';
 import { RNG } from './rng';
-import { blocks } from './blocks';
+import { blocks, resources } from './blocks.js';
 
 const geometry = new THREE.BoxGeometry(1, 1, 1);
 
-const material = new THREE.MeshLambertMaterial({
-  color: 0x00ff00,
-});
-
 export class World extends THREE.Group {
-  data = [];
+  size = {
+    width: 64,
+    height: 16,
+  };
+
+  /**
+   * Parameters for terrain generation
+   */
   params = {
     seed: 0,
     terrain: {
       scale: 30,
-      magnitude: 0.5,
-      offset: 0.2,
+      magnitude: 0.2,
+      offset: 0.5,
     },
   };
-  constructor(size = { width: 64, height: 20 }) {
-    super();
-    this.size = size;
-  }
 
+  /**
+   * @type {{
+   *  id: number,
+   *  instanceId: number
+   * }[][][]}
+   */
+  data = [];
+
+  threshold = 0.5;
+
+  /**
+   * Generates the world data and meshes
+   */
   generate() {
-    this.initializeTerrain();
-    this.generateTerrain();
+    const rng = new RNG(this.params.seed);
+    this.initialize();
+    this.generateResources(rng);
+    this.generateTerrain(rng);
     this.generateMeshes();
   }
 
-  /*
-   * initializing world terrain data
+  /**
+   * Initializes an empty world
    */
-  initializeTerrain() {
+  initialize() {
     this.data = [];
     for (let x = 0; x < this.size.width; x++) {
       const slice = [];
@@ -51,30 +65,70 @@ export class World extends THREE.Group {
     }
   }
 
-  generateTerrain() {
-    const rng = new RNG(this.params.seed);
+  /**
+   * Generates resources within the world
+   * @param {RNG} rng Random number generator
+   */
+  generateResources(rng) {
+    for (const resource of resources) {
+      const simplex = new SimplexNoise(rng);
+      for (let x = 0; x < this.size.width; x++) {
+        for (let y = 0; y < this.size.height; y++) {
+          for (let z = 0; z < this.size.width; z++) {
+            const n = simplex.noise3d(
+              x / resource.scale.x,
+              y / resource.scale.y,
+              z / resource.scale.z
+            );
+
+            if (n > resource.scarcity) {
+              this.setBlockId(x, y, z, resource.id);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Generates the world terrain data
+   * @param {RNG} rng Random number generator
+   */
+  generateTerrain(rng) {
     const simplex = new SimplexNoise(rng);
     for (let x = 0; x < this.size.width; x++) {
       for (let z = 0; z < this.size.width; z++) {
-        const noiseValue = simplex.noise(
+        // Compute noise value at this x-z location
+        const value = simplex.noise(
           x / this.params.terrain.scale,
           z / this.params.terrain.scale
         );
-        const scaledNoise =
-          this.params.terrain.offset +
-          this.params.terrain.magnitude * noiseValue;
 
+        // Scale noise based on the magnitude and add in the offset
+        const scaledNoise =
+          this.params.terrain.offset + this.params.terrain.magnitude * value;
+
+        // Compute final height of terrain at this location
         let height = this.size.height * scaledNoise;
+
+        // Clamp between 0 and max height
         height = Math.max(
           0,
           Math.min(Math.floor(height), this.size.height - 1)
         );
-        for (let y = 0; y <= height; y++) {
+
+        // Starting at the terrain height, fill in all the blocks below that height
+        for (let y = 0; y < this.size.height; y++) {
           if (y === height) {
             this.setBlockId(x, y, z, blocks.grass.id);
-          } else if (y < height) {
+            // Fill in blocks with dirt if they aren't already filled with something else
+          } else if (
+            y < height &&
+            this.getBlock(x, y, z).id === blocks.empty.id
+          ) {
             this.setBlockId(x, y, z, blocks.dirt.id);
-          } else {
+            // Clear everything above
+          } else if (y > height) {
             this.setBlockId(x, y, z, blocks.empty.id);
           }
         }
@@ -82,42 +136,107 @@ export class World extends THREE.Group {
     }
   }
 
+  /**
+   * Generates the meshes from the world data
+   */
   generateMeshes() {
-    this.clear();
+    this.disposeChildren();
 
-    const maxCount = this.size.width * this.size.height * this.size.width;
-    const mesh = new THREE.InstancedMesh(geometry, material, maxCount);
-    mesh.count = 0;
+    // Create lookup table of InstancedMesh's with the block id being the key
+    const meshes = {};
+    Object.values(blocks)
+      .filter((blockType) => blockType.id !== blocks.empty.id)
+      .forEach((blockType) => {
+        const maxCount = this.size.width * this.size.width * this.size.height;
+        const mesh = new THREE.InstancedMesh(
+          geometry,
+          blockType.material,
+          maxCount
+        );
+        mesh.name = blockType.name;
+        mesh.count = 0;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        meshes[blockType.id] = mesh;
+      });
 
+    // Add instances for each non-empty block
     const matrix = new THREE.Matrix4();
     for (let x = 0; x < this.size.width; x++) {
       for (let y = 0; y < this.size.height; y++) {
         for (let z = 0; z < this.size.width; z++) {
           const blockId = this.getBlock(x, y, z).id;
+
+          // Ignore empty blocks
+          if (blockId === blocks.empty.id) continue;
+
+          const mesh = meshes[blockId];
           const instanceId = mesh.count;
-          const blockType = Object.values(blocks).find((x) => x.id === blockId);
-          if (blockId !== blocks.empty.id && !this.isBlockObscured(x, y, z)) {
-            matrix.setPosition(x + 0.5, y + 0.5, z + 0.5);
+
+          // Create a new instance if block is not obscured by other blocks
+          if (!this.isBlockObscured(x, y, z)) {
+            matrix.setPosition(x, y, z);
             mesh.setMatrixAt(instanceId, matrix);
-            this.setBlockId(x, y, z, instanceId);
-            console.log(blockType.color);
-            mesh.setColorAt(instanceId, new THREE.Color(blockType.color));
+            this.setBlockInstanceId(x, y, z, instanceId);
             mesh.count++;
           }
         }
       }
     }
-    this.add(mesh);
+
+    // Add all instanced meshes to the scene
+    this.add(...Object.values(meshes));
   }
 
   /**
-   * check if the (x,y,z) cords are in bounds
+   * Gets the block data at (x, y, z)
    * @param {number} x
    * @param {number} y
    * @param {number} z
-   * @returns {boolean} true if in bounds, false otherwise
-   * */
-  inbounds(x, y, z) {
+   * @returns {{id: number, instanceId: number}}
+   */
+  getBlock(x, y, z) {
+    if (this.inBounds(x, y, z)) {
+      return this.data[x][y][z];
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Sets the block id for the block at (x, y, z)
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   * @param {number} id
+   */
+  setBlockId(x, y, z, id) {
+    if (this.inBounds(x, y, z)) {
+      this.data[x][y][z].id = id;
+    }
+  }
+
+  /**
+   * Sets the block instance id for the block at (x, y, z)
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   * @param {number} instanceId
+   */
+  setBlockInstanceId(x, y, z, instanceId) {
+    if (this.inBounds(x, y, z)) {
+      this.data[x][y][z].instanceId = instanceId;
+    }
+  }
+
+  /**
+   * Checks if the (x, y, z) coordinates are within bounds
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   * @returns {boolean}
+   */
+  inBounds(x, y, z) {
     if (
       x >= 0 &&
       x < this.size.width &&
@@ -129,34 +248,6 @@ export class World extends THREE.Group {
       return true;
     } else {
       return false;
-    }
-  }
-
-  /**
-   * Gets the block data at (x,y,z)
-   * @param {number} x
-   * @param {number} y
-   * @param {number} z
-   * @returns {object|null} The block data or null if out of bounds
-   * */
-  getBlock(x, y, z) {
-    if (this.inbounds(x, y, z)) {
-      return this.data[x][y][z];
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Sets the block id
-   * @param {number} x
-   * @param {number} y
-   * @param {number} z
-   * @returns {null}
-   * */
-  setBlockId(x, y, z, id) {
-    if (this.inbounds(x, y, z)) {
-      this.data[x][y][z].id = id;
     }
   }
 
@@ -188,5 +279,12 @@ export class World extends THREE.Group {
     } else {
       return true;
     }
+  }
+
+  disposeChildren() {
+    this.traverse((obj) => {
+      if (obj.dispose) obj.dispose();
+    });
+    this.clear();
   }
 }
