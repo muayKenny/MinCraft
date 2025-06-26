@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { max } from 'three/tsl';
 import { SimplexNoise } from 'three/examples/jsm/Addons.js';
+import { RNG } from './rng';
 
-const geometry = new THREE.BoxGeometry();
+const geometry = new THREE.BoxGeometry(1, 1, 1);
 
 const material = new THREE.MeshLambertMaterial({
   color: 0x00ff00,
@@ -11,13 +11,14 @@ const material = new THREE.MeshLambertMaterial({
 export class World extends THREE.Group {
   data = [];
   params = {
+    seed: 0,
     terrain: {
       scale: 30,
       magnitude: 0.5,
       offset: 0.2,
     },
   };
-  constructor(size = { width: 64, height: 1 }) {
+  constructor(size = { width: 64, height: 20 }) {
     super();
     this.size = size;
   }
@@ -49,7 +50,8 @@ export class World extends THREE.Group {
     }
   }
   generateTerrain() {
-    const simplex = new SimplexNoise();
+    const rng = new RNG(this.params.seed);
+    const simplex = new SimplexNoise(rng);
     for (let x = 0; x < this.size.width; x++) {
       for (let z = 0; z < this.size.width; z++) {
         const noiseValue = simplex.noise(
@@ -68,7 +70,6 @@ export class World extends THREE.Group {
         }
       }
     }
-    console.log(this.data);
   }
 
   generateMeshes() {

@@ -35,7 +35,7 @@ function setupLights() {
   scene.add(light1);
 
   const light2 = new THREE.DirectionalLight();
-  light2.position.set(-1, -1, -1);
+  light2.position.set(-1, -1, -0.5);
   scene.add(light2);
 
   const ambientLight = new THREE.AmbientLight(); // soft white light
