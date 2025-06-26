@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { max } from 'three/tsl';
+import { SimplexNoise } from 'three/examples/jsm/Addons.js';
 
 const geometry = new THREE.BoxGeometry();
 
@@ -9,30 +10,65 @@ const material = new THREE.MeshLambertMaterial({
 
 export class World extends THREE.Group {
   data = [];
+  params = {
+    terrain: {
+      scale: 30,
+      magnitude: 0.5,
+      offset: 0.2,
+    },
+  };
   constructor(size = { width: 64, height: 1 }) {
     super();
     this.size = size;
   }
 
   generate() {
+    this.initializeTerrain();
     this.generateTerrain();
-    console.log(this.data);
     this.generateMeshes();
   }
 
-  generateTerrain() {
+  /*
+   * initializing world terrain data
+   */
+  initializeTerrain() {
     this.data = [];
     for (let x = 0; x < this.size.width; x++) {
       const slice = [];
       for (let y = 0; y < this.size.height; y++) {
         const row = [];
         for (let z = 0; z < this.size.width; z++) {
-          row.push({ id: 1, instanceId: null });
+          row.push({
+            id: 0,
+            instanceId: null,
+          });
         }
         slice.push(row);
       }
       this.data.push(slice);
     }
+  }
+  generateTerrain() {
+    const simplex = new SimplexNoise();
+    for (let x = 0; x < this.size.width; x++) {
+      for (let z = 0; z < this.size.width; z++) {
+        const noiseValue = simplex.noise(
+          x / this.params.terrain.scale,
+          z / this.params.terrain.scale
+        );
+        const scaledNoise =
+          this.params.terrain.offset +
+          this.params.terrain.magnitude * noiseValue;
+
+        let height = this.size.height * scaledNoise;
+        height = Math.max(0, Math.min(height, this.size.height));
+
+        for (let y = 0; y <= height; y++) {
+          this.setBlockId(x, y, z, 1);
+        }
+      }
+    }
+    console.log(this.data);
   }
 
   generateMeshes() {
@@ -62,6 +98,28 @@ export class World extends THREE.Group {
   }
 
   /**
+   * check if the (x,y,z) cords are in bounds
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   * @returns {boolean} true if in bounds, false otherwise
+   * */
+  inbounds(x, y, z) {
+    if (
+      x >= 0 &&
+      x < this.size.width &&
+      y >= 0 &&
+      y < this.size.height &&
+      z >= 0 &&
+      z < this.size.width
+    ) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
    * Gets the block data at (x,y,z)
    * @param {number} x
    * @param {number} y
@@ -86,28 +144,6 @@ export class World extends THREE.Group {
   setBlockId(x, y, z, id) {
     if (this.inbounds(x, y, z)) {
       this.data[x][y][z].id = id;
-    }
-  }
-
-  /**
-   * check if the (x,y,z) cords are in bounds
-   * @param {number} x
-   * @param {number} y
-   * @param {number} z
-   * @returns {boolean} true if in bounds, false otherwise
-   * */
-  inbounds(x, y, z) {
-    if (
-      x >= 0 &&
-      x < this.size.width &&
-      y >= 0 &&
-      y < this.size.height &&
-      z >= 0 &&
-      z < this.size.width
-    ) {
-      return true;
-    } else {
-      return false;
     }
   }
 }
