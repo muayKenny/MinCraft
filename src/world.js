@@ -43,10 +43,37 @@ export class World extends THREE.Group {
     }
     this.chunk = this.children[0]; // For convenience, set the first chunk as the current chunk
   }
+  getChunk(chunkX, chunkZ) {
+    return this.children.find(
+      (chunk) => chunk.userData.x === chunkX && chunk.userData.z === chunkZ
+    );
+  }
 
-  /* getblock */
+  worldToChunkCoords(x, y, z) {
+    const chunkCoords = {
+      x: Math.floor(x / this.chunkSize.width),
+      z: Math.floor(z / this.chunkSize.width),
+    };
+    const blockCoords = {
+      x: x - chunkCoords.x * this.chunkSize.width,
+      y,
+      z: z - chunkCoords.z * this.chunkSize.width,
+    };
+    return {
+      chunk: chunkCoords,
+      block: blockCoords,
+    };
+  }
+
   getBlock(x, y, z) {
-    return this.chunk.getBlock(x, y, z);
+    const coords = this.worldToChunkCoords(x, y, z);
+    const chunk = this.getChunk(coords.chunk.x, coords.chunk.z);
+
+    if (chunk) {
+      return chunk.getBlock(coords.block.x, coords.block.y, coords.block.z);
+    } else {
+      return null;
+    }
   }
 
   disposeChunks() {
