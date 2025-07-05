@@ -67,6 +67,9 @@ const world = new World();
 world.generate();
 scene.add(world);
 
+const axesHelper = new THREE.AxesHelper(200);
+scene.add(axesHelper);
+
 // render loop
 let previousTime = performance.now();
 function animate() {
