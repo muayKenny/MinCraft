@@ -25,7 +25,7 @@ export class Player {
    * @params {THREE.scene}
    * */
   constructor(scene) {
-    this.camera.position.set(32, 32, 32);
+    this.camera.position.set(32, 52, 32);
     this.cameraHelper.visible = false;
 
     scene.add(this.camera);

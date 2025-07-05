@@ -20,8 +20,8 @@ export function setupUI(world, player, physics) {
   physicsFolder.add(physics, 'simulationRate', 10, 1000).name('Sim Rate');
 
   const worldFolder = gui.addFolder('World');
-  worldFolder.add(world.size, 'width', 8, 128, 1).name('Width');
-  worldFolder.add(world.size, 'height', 8, 32, 1).name('Height');
+  worldFolder.add(world.chunkSize, 'width', 8, 128, 1).name('Width');
+  worldFolder.add(world.chunkSize, 'height', 8, 32, 1).name('Height');
 
   const terrainFolder = worldFolder.addFolder('Terrain');
   terrainFolder.add(world.params, 'seed', 0, 10000, 1).name('Seed');
