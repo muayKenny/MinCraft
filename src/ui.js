@@ -42,4 +42,8 @@ export function setupUI(world, player, physics) {
   terrainFolder.onChange((event) => {
     world.generate();
   });
+  worldFolder.onChange((event) => {
+    console.log('yo');
+    world.generate();
+  });
 }
