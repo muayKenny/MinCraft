@@ -5,6 +5,7 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { setupUI } from './ui';
 import { Player } from './player';
 import { Physics } from './physics';
+import { blocks } from './blocks';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -186,19 +187,20 @@ const bloomSettings = {
  */
 function onMouseDown(event) {
   if (player.controls.isLocked && player.selectedCoords) {
-    // if (player.activeBlockId !== blocks.empty.id) {
-    // world.addBlock(
-    //   player.selectedCoords.x,
-    //   player.selectedCoords.y,
-    //   player.selectedCoords.z,
-    //   player.activeBlockId
-    // );
-    // } else {
-    world.removeBlock(
-      player.selectedCoords.x,
-      player.selectedCoords.y,
-      player.selectedCoords.z
-    );
+    if (player.activeBlockId !== blocks.empty.id) {
+      world.addBlock(
+        player.selectedCoords.x,
+        player.selectedCoords.y,
+        player.selectedCoords.z,
+        player.activeBlockId
+      );
+    } else {
+      world.removeBlock(
+        player.selectedCoords.x,
+        player.selectedCoords.y,
+        player.selectedCoords.z
+      );
+    }
   }
 }
 document.addEventListener('mousedown', onMouseDown);

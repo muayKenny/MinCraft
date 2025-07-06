@@ -169,6 +169,30 @@ export class World extends THREE.Group {
   }
 
   /**
+   * Adds a block at the given coordinates
+   * @param {number} x - The x coordinate of the block
+   * @param {number} y - The y coordinate of the block
+   * @param {number} z - The z coordinate of the block
+   * @param {number} blockId - The ID of the block to add
+   */
+  addBlock(x, y, z, blockId) {
+    const coords = this.worldToChunkCoords(x, y, z);
+    const chunk = this.getChunk(coords.chunk.x, coords.chunk.z);
+
+    if (chunk) {
+      chunk.addBlock(coords.block.x, coords.block.y, coords.block.z, blockId);
+
+      // hide any adjacent blocks
+      this.hideBlockIfNeeded(x - 1, y, z);
+      this.hideBlockIfNeeded(x + 1, y, z);
+      this.hideBlockIfNeeded(x, y - 1, z);
+      this.hideBlockIfNeeded(x, y + 1, z);
+      this.hideBlockIfNeeded(x, y, z - 1);
+      this.hideBlockIfNeeded(x, y, z + 1);
+    }
+  }
+
+  /**
    * Reveals the block at (x,y,z) by adding a new mesh instance
    * @param {number} x
    * @param {number} y
@@ -180,6 +204,25 @@ export class World extends THREE.Group {
 
     if (chunk) {
       chunk.addBlockInstance(coords.block.x, coords.block.y, coords.block.z);
+    }
+  }
+
+  /**
+   * Hides the block at (x,y,z) by removing the  new mesh instance
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   */
+  hideBlockIfNeeded(x, y, z) {
+    const coords = this.worldToChunkCoords(x, y, z);
+    const chunk = this.getChunk(coords.chunk.x, coords.chunk.z);
+
+    // remove the block instance if it is obscured
+    if (
+      chunk &&
+      chunk.isBlockObscured(coords.block.x, coords.block.y, coords.block.z)
+    ) {
+      chunk.deleteBlockInstance(coords.block.x, coords.block.y, coords.block.z);
     }
   }
 
@@ -237,6 +280,23 @@ export class World extends THREE.Group {
       this.revealBlock(x, y, z + 1);
     } else {
       console.warn(`Chunk at (${coords.chunk.x}, ${coords.chunk.z}) not found`);
+    }
+  }
+  /**
+   * Hides the block at (x,y,z) by removing the  new mesh instance
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   */
+  hideBlock(x, y, z) {
+    const coords = this.worldToChunkCoords(x, y, z);
+    const chunk = this.getChunk(coords.chunk.x, coords.chunk.z);
+
+    if (
+      chunk &&
+      chunk.isBlockObsured(coords.block.x, coords.block.y, coords.block.z)
+    ) {
+      chunk.deleteBlockInstance(coords.block.x, coords.block.y, coords.block.z);
     }
   }
 }

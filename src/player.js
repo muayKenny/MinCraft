@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/Addons.js';
+import { blocks } from './blocks.js';
 
 const CENTER_SCREEN = new THREE.Vector2();
 
@@ -31,6 +32,7 @@ export class Player {
   );
 
   selectedCoords = null;
+  activeBlockId = blocks.grass.id;
 
   /**
    * @params {THREE.scene}
@@ -116,15 +118,21 @@ export class Player {
       const intersection = intersects[0];
 
       // get the position of the chunk that the block is in
-      const chunkPosition = intersection.object.parent;
+      const chunk = intersection.object.parent;
 
       // get transformation matrix of the intersected block
       const blockMatrix = new THREE.Matrix4();
       intersection.object.getMatrixAt(intersection.instanceId, blockMatrix);
 
       // extract the poistion from the block's transformation matrix
-      this.selectedCoords = chunkPosition.position.clone();
-      this.selectedCoords = new THREE.Vector3().applyMatrix4(blockMatrix);
+      this.selectedCoords = chunk.position.clone();
+      this.selectedCoords.applyMatrix4(blockMatrix);
+
+      // if we are adding a block to the world, move the selection indicator
+      // ->>> to the nearest adjacent block
+      if (this.activeBlockId !== blocks.empty.id) {
+        this.selectedCoords.add(intersection.normal);
+      }
 
       this.selectionHelper.position.copy(this.selectedCoords);
       this.selectionHelper.visible = true;
@@ -149,6 +157,15 @@ export class Player {
    */
   onKeyDown(event) {
     switch (event.code) {
+      case 'Digit0':
+      case 'Digit1':
+      case 'Digit2':
+      case 'Digit3':
+      case 'Digit4':
+      case 'Digit5':
+        this.activeBlockId = Number(event.key);
+        console.log(`activeBlockId = ${event.key}`);
+        break;
       case 'KeyW':
         this.input.z = this.maxSpeed;
         break;

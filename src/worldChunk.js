@@ -268,6 +268,35 @@ export class WorldChunk extends THREE.Group {
       back === blocks.empty.id
     ) {
       return false;
+    }
+    return true;
+  }
+
+  /**
+   * Returns true if this block is completely hidden by other blocks
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   * @returns {boolean}
+   */
+  isBlockObscured(x, y, z) {
+    const up = this.getBlock(x, y + 1, z)?.id ?? blocks.empty.id;
+    const down = this.getBlock(x, y - 1, z)?.id ?? blocks.empty.id;
+    const left = this.getBlock(x + 1, y, z)?.id ?? blocks.empty.id;
+    const right = this.getBlock(x - 1, y, z)?.id ?? blocks.empty.id;
+    const forward = this.getBlock(x, y, z + 1)?.id ?? blocks.empty.id;
+    const back = this.getBlock(x, y, z - 1)?.id ?? blocks.empty.id;
+
+    // If any of the block's sides is exposed, it is not obscured
+    if (
+      up === blocks.empty.id ||
+      down === blocks.empty.id ||
+      left === blocks.empty.id ||
+      right === blocks.empty.id ||
+      forward === blocks.empty.id ||
+      back === blocks.empty.id
+    ) {
+      return false;
     } else {
       return true;
     }
@@ -324,8 +353,8 @@ export class WorldChunk extends THREE.Group {
 
     // remove the instance associated with the block
     this.setBlockInstanceId(x, y, z, null);
-    this.setBlockId(x, y, z, blocks.empty.id);
   }
+
   /**
    * Removes a block at the specified coordinates
    * @param {number} x
@@ -337,6 +366,24 @@ export class WorldChunk extends THREE.Group {
     if (block && block.id !== blocks.empty.id) {
       console.log(`Removing block at X:${x} Y:${y} Z:${z}`);
       this.deleteBlockInstance(x, y, z);
+      this.setBlockId(x, y, z, blocks.empty.id);
+    }
+  }
+
+  /**
+   * Adds a new block at (x,y,z) of type `blockId`
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   * @param {number} blockId
+   */
+  addBlock(x, y, z, blockId) {
+    // Safety check that we aren't adding a block for one that
+    // already has an instance
+    if (this.getBlock(x, y, z).id === blocks.empty.id) {
+      this.setBlockId(x, y, z, blockId);
+      this.addBlockInstance(x, y, z);
+      this.dataStore.set(this.position.x, this.position.z, x, y, z, blockId);
     }
   }
 
