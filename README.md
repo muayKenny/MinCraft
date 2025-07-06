@@ -13,13 +13,13 @@ Artist: Kevin MacLeod
 
 ## ✨ Features
 
-- **Procedural world generation** with chunks and biomes
+- **Procedural world generation** with chunks
 - **First-person exploration** with smooth controls
 - **Block placing/breaking** with intuitive tools
 - **Ambient background music** (toggle with `M`)
 - **Multiple environment themes** for different vibes
 - **Physics simulation** with collision detection
-- **Debug tools** for developers
+- **Debug tools** for developers (add #debug to the url)
 
 ## 🎮 Controls
 
@@ -67,21 +67,10 @@ The game uses a modular architecture with separate systems:
 - **Audio** - Background music and sound effects
 - **UI** - Debug tools and settings
 
-## 🎨 Customization
-
-- Add new block types in `src/blocks.js`
-- Modify world generation in `src/worldChunk.js`
-- Adjust player physics in `src/physics.js`
-- Change environment themes in `src/main.js`
-
-## 🙏 Credits
-
-Built following the excellent tutorial by **Dan Greenheck** at [threejsroadmap.com](https://threejsroadmap.com/)
-
 ## 📝 License
 
 MIT License - feel free to build upon this project!
 
 ---
 
-🎮\_
+🎮
