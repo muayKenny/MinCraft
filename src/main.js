@@ -10,6 +10,9 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
+// Game state
+let gameStarted = false;
+
 // renderer
 const renderer = new THREE.WebGLRenderer();
 
@@ -20,7 +23,6 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setClearColor(0x80a0e0);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-document.body.appendChild(renderer.domElement);
 
 const orbitCamera = new THREE.PerspectiveCamera(
   75,
@@ -182,6 +184,8 @@ const bloomSettings = {
 // render loop
 let previousTime = performance.now();
 function animate() {
+  if (!gameStarted) return;
+  
   requestAnimationFrame(animate);
   const currentTime = performance.now();
   const dt = (currentTime - previousTime) / 1000;
@@ -209,14 +213,35 @@ window.addEventListener('resize', () => {
   composer.setSize(window.innerWidth, window.innerHeight);
 });
 
-setupLights();
-setupUI(
-  world,
-  player,
-  physics,
-  environmentSettings,
-  bloomSettings,
-  bloomPass,
-  audioSettings
-);
-animate();
+// Game initialization function
+function initializeGame() {
+  if (gameStarted) return;
+  
+  gameStarted = true;
+  
+  // Hide menu and show game
+  document.getElementById('main-menu').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('app').appendChild(renderer.domElement);
+  
+  setupLights();
+  setupUI(
+    world,
+    player,
+    physics,
+    environmentSettings,
+    bloomSettings,
+    bloomPass,
+    audioSettings
+  );
+  animate();
+  
+  // Start audio when game begins
+  startAudio();
+}
+
+// Menu event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  const startButton = document.getElementById('start-button');
+  startButton.addEventListener('click', initializeGame);
+});
