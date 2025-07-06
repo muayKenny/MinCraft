@@ -6,7 +6,7 @@ import { resources } from './blocks';
  *
  * @param {World} world
  */
-export function setupUI(world, player, physics, environmentSettings, bloomSettings, bloomPass) {
+export function setupUI(world, player, physics, environmentSettings, bloomSettings, bloomPass, audioSettings) {
   if (!window.location.hash.toLowerCase().includes('debug')) return;
 
   const gui = new GUI();
@@ -29,6 +29,24 @@ export function setupUI(world, player, physics, environmentSettings, bloomSettin
   bloomFolder.add(bloomSettings, 'threshold', 0, 1, 0.01).name('Threshold').onChange((value) => {
     bloomPass.threshold = value;
   });
+
+  // Audio controls folder
+  const audioFolder = gui.addFolder('Audio');
+  audioFolder.add(audioSettings, 'volume', 0, 1, 0.01).name('Volume').onChange((value) => {
+    audioSettings.setVolume(value);
+  });
+  
+  // Create a custom controller for play/pause
+  const audioControls = {
+    'Play/Pause': function() {
+      if (audioSettings.isPlaying) {
+        audioSettings.pause();
+      } else {
+        audioSettings.play();
+      }
+    }
+  };
+  audioFolder.add(audioControls, 'Play/Pause');
 
   const playerFolder = gui.addFolder('Player');
   playerFolder.add(player, 'maxSpeed', 1, 20, 0.1).name('Max Speed');

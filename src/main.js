@@ -72,6 +72,52 @@ const environmentSettings = {
 // Load initial environment map
 environmentSettings.loadEnvironmentMap(environmentSettings.current);
 
+// scene.fog = new THREE.Fog(0xcccccc, 10, 100);
+
+// renderer.setClearColor(scene.fog.color, 1);
+// Audio setup
+const audio = new Audio(
+  '/music/Crusade - Heavy Industry (online-audio-converter.com).ogg'
+);
+audio.loop = true;
+audio.volume = 0.5;
+
+const audioSettings = {
+  isPlaying: false,
+  volume: 0.5,
+  play: function () {
+    audio
+      .play()
+      .then(() => {
+        this.isPlaying = true;
+      })
+      .catch((err) => {
+        console.log('Audio play failed:', err);
+      });
+  },
+  pause: function () {
+    audio.pause();
+    this.isPlaying = false;
+  },
+  setVolume: function (volume) {
+    audio.volume = volume;
+    this.volume = volume;
+  },
+};
+
+// Auto-play audio when user interacts with the page
+let audioStarted = false;
+function startAudio() {
+  if (!audioStarted) {
+    audioSettings.play();
+    audioStarted = true;
+  }
+}
+
+// Add event listeners for user interaction to start audio
+document.addEventListener('click', startAudio);
+document.addEventListener('keydown', startAudio);
+
 const player = new Player(scene);
 const physics = new Physics(scene);
 
@@ -113,7 +159,7 @@ composer.addPass(renderPass);
 // Bloom pass - adds bloom effect
 const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
-  1.5, // strength
+  0.2, // strength
   0.4, // radius
   0.85 // threshold
 );
@@ -164,5 +210,13 @@ window.addEventListener('resize', () => {
 });
 
 setupLights();
-setupUI(world, player, physics, environmentSettings, bloomSettings, bloomPass);
+setupUI(
+  world,
+  player,
+  physics,
+  environmentSettings,
+  bloomSettings,
+  bloomPass,
+  audioSettings
+);
 animate();
