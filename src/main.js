@@ -36,6 +36,35 @@ document.body.appendChild(stats.dom);
 // scene setup
 const scene = new THREE.Scene();
 
+const textureLoader = new THREE.TextureLoader();
+
+// Available environment maps
+const environmentMaps = {
+  'Fantasy Castles': '/environmentMaps/fantasy_lands_castles_at_night.jpg',
+  'Anime Cherry Blossom': '/environmentMaps/anime_art_style_japan_streets_with_cherry_blossom_.jpg',
+  'Neon City Night': '/environmentMaps/digital_painting_neon_city_night_orange_lights_.jpg',
+  'Sci-Fi Skyscrapers': '/environmentMaps/scifi_white_sky_scrapers_in_clouds_at_day_time.jpg'
+};
+
+// Environment map settings
+const environmentSettings = {
+  current: 'Fantasy Castles',
+  loadEnvironmentMap: function(mapName) {
+    if (environmentMaps[mapName]) {
+      const environmentMap = textureLoader.load(environmentMaps[mapName]);
+      environmentMap.mapping = THREE.EquirectangularReflectionMapping;
+      environmentMap.colorSpace = THREE.SRGBColorSpace;
+      
+      scene.background = environmentMap;
+      scene.environment = environmentMap;
+      this.current = mapName;
+    }
+  }
+};
+
+// Load initial environment map
+environmentSettings.loadEnvironmentMap(environmentSettings.current);
+
 const player = new Player(scene);
 const physics = new Physics(scene);
 
@@ -97,5 +126,5 @@ window.addEventListener('resize', () => {
 });
 
 setupLights();
-setupUI(world, player, physics);
+setupUI(world, player, physics, environmentSettings);
 animate();

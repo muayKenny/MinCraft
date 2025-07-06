@@ -6,10 +6,17 @@ import { resources } from './blocks';
  *
  * @param {World} world
  */
-export function setupUI(world, player, physics) {
+export function setupUI(world, player, physics, environmentSettings) {
   if (!window.location.hash.toLowerCase().includes('debug')) return;
 
   const gui = new GUI();
+
+  // Environment folder
+  const environmentFolder = gui.addFolder('Environment');
+  const environmentMapNames = ['Fantasy Castles', 'Anime Cherry Blossom', 'Neon City Night', 'Sci-Fi Skyscrapers'];
+  environmentFolder.add(environmentSettings, 'current', environmentMapNames).name('Environment Map').onChange((value) => {
+    environmentSettings.loadEnvironmentMap(value);
+  });
 
   const playerFolder = gui.addFolder('Player');
   playerFolder.add(player, 'maxSpeed', 1, 20, 0.1).name('Max Speed');
