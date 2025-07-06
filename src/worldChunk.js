@@ -29,7 +29,6 @@ export class WorldChunk extends THREE.Group {
    * Generates the world data and meshes
    */
   generate() {
-    console.log(this.params);
     const rng = new RNG(this.params.seed);
     this.initialize();
     this.generateResources(rng);

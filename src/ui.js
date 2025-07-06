@@ -7,6 +7,8 @@ import { resources } from './blocks';
  * @param {World} world
  */
 export function setupUI(world, player, physics) {
+  if (!window.location.hash.toLowerCase().includes('debug')) return;
+
   const gui = new GUI();
 
   const playerFolder = gui.addFolder('Player');

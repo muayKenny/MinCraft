@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { WorldChunk } from './worldChunk';
 
 export class World extends THREE.Group {
+  drawDistance = 1;
   chunkSize = {
     width: 64,
     height: 32,
@@ -43,6 +44,12 @@ export class World extends THREE.Group {
     }
     this.chunk = this.children[0]; // For convenience, set the first chunk as the current chunk
   }
+
+  update(player) {
+    const visibleChunks = this.getVisibleChunks(player);
+    const chunksToAdd = this.getChunksToAdd(visibleChunks);
+  }
+
   getChunk(chunkX, chunkZ) {
     return this.children.find(
       (chunk) => chunk.userData.x === chunkX && chunk.userData.z === chunkZ
@@ -63,6 +70,37 @@ export class World extends THREE.Group {
       chunk: chunkCoords,
       block: blockCoords,
     };
+  }
+
+  getVisibleChunks(player) {
+    const visibleChunks = [];
+
+    const coords = this.worldToChunkCoords(
+      player.position.x,
+      player.position.y,
+      player.position.z
+    );
+
+    const chunkX = coords.chunk.x;
+    const chunkZ = coords.chunk.z;
+    for (
+      let x = chunkX - this.drawDistance;
+      x <= chunkX + this.drawDistance;
+      x++
+    ) {
+      for (
+        let z = chunkZ - this.drawDistance;
+        z <= chunkZ + this.drawDistance;
+        z++
+      ) {
+        const chunk = this.getChunk(x, z);
+        if (chunk) {
+          visibleChunks.push(chunk);
+        }
+      }
+    }
+
+    return visibleChunks;
   }
 
   getBlock(x, y, z) {
