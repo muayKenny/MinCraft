@@ -185,7 +185,7 @@ const bloomSettings = {
 let previousTime = performance.now();
 function animate() {
   if (!gameStarted) return;
-  
+
   requestAnimationFrame(animate);
   const currentTime = performance.now();
   const dt = (currentTime - previousTime) / 1000;
@@ -193,6 +193,7 @@ function animate() {
 
   player.applyInputs(dt);
   stats.update();
+  world.update(player);
 
   // Update the camera for the render pass
   const activeCamera = player.controls.isLocked ? player.camera : orbitCamera;
@@ -216,14 +217,14 @@ window.addEventListener('resize', () => {
 // Game initialization function
 function initializeGame() {
   if (gameStarted) return;
-  
+
   gameStarted = true;
-  
+
   // Hide menu and show game
   document.getElementById('main-menu').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('app').appendChild(renderer.domElement);
-  
+
   setupLights();
   setupUI(
     world,
@@ -235,7 +236,7 @@ function initializeGame() {
     audioSettings
   );
   animate();
-  
+
   // Start audio when game begins
   startAudio();
 }
