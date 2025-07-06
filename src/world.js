@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { WorldChunk } from './worldChunk';
+import { DataStore } from './dataStore';
 
 export class World extends THREE.Group {
   asyncLoading = true; // If true, chunks will be generated in the background
@@ -17,6 +18,8 @@ export class World extends THREE.Group {
     },
   };
 
+  dataStore = new DataStore();
+
   constructor(seed = 0) {
     super();
     this.loaded = false;
@@ -25,10 +28,15 @@ export class World extends THREE.Group {
   }
 
   generate() {
+    this.dataStore.clear();
     this.disposeChunks();
     for (let x = -1; x <= 1; x++) {
       for (let z = -1; z <= 1; z++) {
-        const chunk = new WorldChunk(this.chunkSize, this.params);
+        const chunk = new WorldChunk(
+          this.chunkSize,
+          this.params,
+          this.dataStore
+        );
         chunk.position.set(
           x * this.chunkSize.width,
           0,
@@ -153,7 +161,7 @@ export class World extends THREE.Group {
    * @param {number} z
    */
   generateChunk(x, z) {
-    const chunk = new WorldChunk(this.chunkSize, this.params);
+    const chunk = new WorldChunk(this.chunkSize, this.params, this.dataStore);
     chunk.position.set(x * this.chunkSize.width, 0, z * this.chunkSize.width);
     chunk.userData = { x, z };
 

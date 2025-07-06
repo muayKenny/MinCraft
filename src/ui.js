@@ -71,9 +71,9 @@ export function setupUI(
 
   const worldFolder = gui.addFolder('World');
   worldFolder.add(world, 'drawDistance', 0, 5, 1).name('Draw Distance');
-  worldFolder
-    .add(world, 'proceduralGeneration', false)
-    .name('Procedural Generation');
+  // worldFolder
+  //   .add(world, 'proceduralGeneration', false)
+  //   .name('Procedural Generation');
   worldFolder.close();
 
   const terrainFolder = worldFolder.addFolder('Terrain');

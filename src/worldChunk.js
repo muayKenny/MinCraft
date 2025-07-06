@@ -17,10 +17,11 @@ export class WorldChunk extends THREE.Group {
    */
   data = [];
 
-  constructor(size = { width: 64, height: 32 }, params) {
+  constructor(size = { width: 64, height: 32 }, params, dataStore) {
     super();
     this.size = size;
     this.params = params;
+    this.dataStore = dataStore;
   }
 
   threshold = 0.5;
@@ -33,6 +34,7 @@ export class WorldChunk extends THREE.Group {
     this.initialize();
     this.generateResources(rng);
     this.generateTerrain(rng);
+    this.loadPlayerChanges();
     this.generateMeshes();
   }
 
@@ -122,6 +124,31 @@ export class WorldChunk extends THREE.Group {
             // Clear everything above
           } else if (y > height) {
             this.setBlockId(x, y, z, blocks.empty.id);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Pulls any changes from the data store and applies them to the data model
+   */
+  loadPlayerChanges() {
+    for (let x = 0; x < this.size.width; x++) {
+      for (let y = 0; y < this.size.height; y++) {
+        for (let z = 0; z < this.size.width; z++) {
+          // Overwrite with value in data store if it exists
+          if (
+            this.dataStore.contains(this.position.x, this.position.z, x, y, z)
+          ) {
+            const blockId = this.dataStore.get(
+              this.position.x,
+              this.position.z,
+              x,
+              y,
+              z
+            );
+            this.setBlockId(x, y, z, blockId);
           }
         }
       }
@@ -367,6 +394,14 @@ export class WorldChunk extends THREE.Group {
       console.log(`Removing block at X:${x} Y:${y} Z:${z}`);
       this.deleteBlockInstance(x, y, z);
       this.setBlockId(x, y, z, blocks.empty.id);
+      this.dataStore.set(
+        this.position.x,
+        this.position.z,
+        x,
+        y,
+        z,
+        blocks.empty.id
+      );
     }
   }
 
