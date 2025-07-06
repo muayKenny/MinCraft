@@ -169,6 +169,21 @@ export class World extends THREE.Group {
   }
 
   /**
+   * Reveals the block at (x,y,z) by adding a new mesh instance
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   */
+  revealBlock(x, y, z) {
+    const coords = this.worldToChunkCoords(x, y, z);
+    const chunk = this.getChunk(coords.chunk.x, coords.chunk.z);
+
+    if (chunk) {
+      chunk.addBlockInstance(coords.block.x, coords.block.y, coords.block.z);
+    }
+  }
+
+  /**
    * Removes current loaded chunks that are no longer visible to the player
    * @param {{ x: number, z: number}[]} visibleChunks
    */
@@ -198,5 +213,30 @@ export class World extends THREE.Group {
         chunk.disposeInstances();
       }
     });
+  }
+
+  /**
+   * Removes a block at the given coordinates
+   * @param {number} x - The x coordinate of the block
+   * @param {number} y - The y coordinate of the block
+   * @param {number} z - The z coordinate of the block
+   */
+  removeBlock(x, y, z) {
+    const coords = this.worldToChunkCoords(x, y, z);
+    const chunk = this.getChunk(coords.chunk.x, coords.chunk.z);
+
+    if (chunk) {
+      chunk.removeBlock(coords.block.x, coords.block.y, coords.block.z);
+
+      // Reveal any adjacent blocks that may have been exposed after the block at (x,y,z) was removed
+      this.revealBlock(x - 1, y, z);
+      this.revealBlock(x + 1, y, z);
+      this.revealBlock(x, y - 1, z);
+      this.revealBlock(x, y + 1, z);
+      this.revealBlock(x, y, z - 1);
+      this.revealBlock(x, y, z + 1);
+    } else {
+      console.warn(`Chunk at (${coords.chunk.x}, ${coords.chunk.z}) not found`);
+    }
   }
 }

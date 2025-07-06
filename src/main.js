@@ -109,8 +109,9 @@ const audioSettings = {
 
 // Auto-play audio when user interacts with the page
 let audioStarted = false;
+let autoStart = false;
 function startAudio() {
-  if (!audioStarted) {
+  if (!audioStarted && autoStart) {
     audioSettings.play();
     audioStarted = true;
   }
@@ -178,6 +179,30 @@ const bloomSettings = {
   threshold: 0.85,
 };
 
+// User Input
+/**
+ * Event handler for 'mousedown'' event
+ * @param {MouseEvent} event
+ */
+function onMouseDown(event) {
+  if (player.controls.isLocked && player.selectedCoords) {
+    // if (player.activeBlockId !== blocks.empty.id) {
+    // world.addBlock(
+    //   player.selectedCoords.x,
+    //   player.selectedCoords.y,
+    //   player.selectedCoords.z,
+    //   player.activeBlockId
+    // );
+    // } else {
+    world.removeBlock(
+      player.selectedCoords.x,
+      player.selectedCoords.y,
+      player.selectedCoords.z
+    );
+  }
+}
+document.addEventListener('mousedown', onMouseDown);
+
 // const axesHelper = new THREE.AxesHelper(200);
 // scene.add(axesHelper);
 
@@ -185,15 +210,19 @@ const bloomSettings = {
 let previousTime = performance.now();
 function animate() {
   if (!gameStarted) return;
-
-  requestAnimationFrame(animate);
   const currentTime = performance.now();
   const dt = (currentTime - previousTime) / 1000;
-  physics.update(dt, player, world);
 
-  player.applyInputs(dt);
+  requestAnimationFrame(animate);
+
+  if (player.controls.isLocked) {
+    player.update(world);
+    physics.update(dt, player, world);
+    world.update(player);
+    player.applyInputs(dt);
+  }
+
   stats.update();
-  world.update(player);
 
   // Update the camera for the render pass
   const activeCamera = player.controls.isLocked ? player.camera : orbitCamera;

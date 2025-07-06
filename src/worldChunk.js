@@ -145,7 +145,7 @@ export class WorldChunk extends THREE.Group {
           blockType.material,
           maxCount
         );
-        mesh.name = blockType.name;
+        mesh.name = blockType.id;
         mesh.count = 0;
         mesh.castShadow = true;
         mesh.receiveShadow = true;
@@ -278,5 +278,93 @@ export class WorldChunk extends THREE.Group {
       if (obj.dispose) obj.dispose();
     });
     this.clear();
+  }
+
+  /**
+   * Removes the mesh instance associated with `block` by swapping it
+   * with the last instance and decrementing the instance count.
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   * @param {{ id: number, instanceId: number }} block
+   */
+  deleteBlockInstance(x, y, z) {
+    const block = this.getBlock(x, y, z);
+    if (block.id === blocks.empty.id || !block.instanceId) return;
+    // Get the mesh and instance id of the block
+    const mesh = this.children.find((instanceMesh) => {
+      console.log(instanceMesh, block);
+      return instanceMesh.name === block.id;
+    });
+    const instanceId = block.instanceId;
+
+    // We can't remove an instance directly, so we swap it with the last instance
+    // and decrease the count by 1. We need to do two things:
+    //   1. Swap the matrix of the last instance with the matrix at `instanceId`
+    //   2. Set the instanceId for the last instance to `instanceId`
+    const lastMatrix = new THREE.Matrix4();
+    mesh.getMatrixAt(mesh.count - 1, lastMatrix);
+
+    // Also need to get the block coordinates of the instance
+    // to update the instance id for that block
+    const v = new THREE.Vector3();
+    v.setFromMatrixPosition(lastMatrix);
+    this.setBlockInstanceId(v.x, v.y, v.z, instanceId);
+
+    // Swap the transformation matrices
+    mesh.setMatrixAt(instanceId, lastMatrix);
+
+    // Decrease the mesh count to "delete" the block
+    mesh.count--;
+
+    // Notify the instanced mesh we updated the instance matrix
+    // Also re-compute the bounding sphere so raycasting works
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.computeBoundingSphere();
+
+    // remove the instance associated with the block
+    this.setBlockInstanceId(x, y, z, null);
+    this.setBlockId(x, y, z, blocks.empty.id);
+  }
+  /**
+   * Removes a block at the specified coordinates
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   */
+  removeBlock(x, y, z) {
+    const block = this.getBlock(x, y, z);
+    if (block && block.id !== blocks.empty.id) {
+      console.log(`Removing block at X:${x} Y:${y} Z:${z}`);
+      this.deleteBlockInstance(x, y, z);
+    }
+  }
+
+  /**
+   * Create a new instance for the block at (x,y,z)
+   * @param {number} x
+   * @param {number} y
+   * @param {number} z
+   */
+  addBlockInstance(x, y, z) {
+    const block = this.getBlock(x, y, z);
+
+    // If this block is non-empty and does not already have an instance, create a new one
+    if (block && block.id !== blocks.empty.id && !block.instanceId) {
+      // Append a new instance to the end of our InstancedMesh
+      const mesh = this.children.find(
+        (instanceMesh) => instanceMesh.name === block.id
+      );
+      const instanceId = mesh.count++;
+      this.setBlockInstanceId(x, y, z, instanceId);
+
+      // Update the appropriate instanced mesh
+      // Also re-compute the bounding sphere so raycasting works
+      const matrix = new THREE.Matrix4();
+      matrix.setPosition(x, y, z);
+      mesh.setMatrixAt(instanceId, matrix);
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingSphere();
+    }
   }
 }

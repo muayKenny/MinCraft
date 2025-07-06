@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/Addons.js';
 
+const CENTER_SCREEN = new THREE.Vector2();
+
 export class Player {
   maxSpeed = 10;
   input = new THREE.Vector3();
@@ -21,6 +23,15 @@ export class Player {
   controls = new PointerLockControls(this.camera, document.body);
   cameraHelper = new THREE.CameraHelper(this.camera);
 
+  raycaster = new THREE.Raycaster(
+    new THREE.Vector3(),
+    new THREE.Vector3(),
+    0,
+    3
+  );
+
+  selectedCoords = null;
+
   /**
    * @params {THREE.scene}
    * */
@@ -39,6 +50,15 @@ export class Player {
 
     document.addEventListener('keydown', this.onKeyDown.bind(this));
     document.addEventListener('keyup', this.onKeyUp.bind(this));
+
+    const selectionMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffaa,
+      transparent: true,
+      opacity: 0.3,
+    });
+    const selectionGeometry = new THREE.BoxGeometry(1.01, 1.01, 1.01);
+    this.selectionHelper = new THREE.Mesh(selectionGeometry, selectionMaterial);
+    scene.add(this.selectionHelper);
   }
 
   applyInputs(dt) {
@@ -81,6 +101,37 @@ export class Player {
       new THREE.Euler(0, this.camera.rotation.y, 0)
     );
     return this.#worldVelocity;
+  }
+
+  update(world) {
+    this.updateRaycaster(world);
+  }
+
+  updateRaycaster(world) {
+    this.raycaster.setFromCamera(CENTER_SCREEN, this.camera);
+    const intersects = this.raycaster.intersectObject(world, true);
+    // console.log(intersects);
+
+    if (intersects.length > 0) {
+      const intersection = intersects[0];
+
+      // get the position of the chunk that the block is in
+      const chunkPosition = intersection.object.parent;
+
+      // get transformation matrix of the intersected block
+      const blockMatrix = new THREE.Matrix4();
+      intersection.object.getMatrixAt(intersection.instanceId, blockMatrix);
+
+      // extract the poistion from the block's transformation matrix
+      this.selectedCoords = chunkPosition.position.clone();
+      this.selectedCoords = new THREE.Vector3().applyMatrix4(blockMatrix);
+
+      this.selectionHelper.position.copy(this.selectedCoords);
+      this.selectionHelper.visible = true;
+    } else {
+      this.selectedCoords = null;
+      this.selectionHelper.visible = false;
+    }
   }
 
   /**
