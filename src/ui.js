@@ -6,7 +6,7 @@ import { resources } from './blocks';
  *
  * @param {World} world
  */
-export function setupUI(world, player, physics, environmentSettings) {
+export function setupUI(world, player, physics, environmentSettings, bloomSettings, bloomPass) {
   if (!window.location.hash.toLowerCase().includes('debug')) return;
 
   const gui = new GUI();
@@ -16,6 +16,18 @@ export function setupUI(world, player, physics, environmentSettings) {
   const environmentMapNames = ['Fantasy Castles', 'Anime Cherry Blossom', 'Neon City Night', 'Sci-Fi Skyscrapers'];
   environmentFolder.add(environmentSettings, 'current', environmentMapNames).name('Environment Map').onChange((value) => {
     environmentSettings.loadEnvironmentMap(value);
+  });
+
+  // Bloom post-processing folder
+  const bloomFolder = gui.addFolder('Bloom');
+  bloomFolder.add(bloomSettings, 'strength', 0, 3, 0.1).name('Strength').onChange((value) => {
+    bloomPass.strength = value;
+  });
+  bloomFolder.add(bloomSettings, 'radius', 0, 1, 0.01).name('Radius').onChange((value) => {
+    bloomPass.radius = value;
+  });
+  bloomFolder.add(bloomSettings, 'threshold', 0, 1, 0.01).name('Threshold').onChange((value) => {
+    bloomPass.threshold = value;
   });
 
   const playerFolder = gui.addFolder('Player');

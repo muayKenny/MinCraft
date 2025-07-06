@@ -5,6 +5,10 @@ import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { setupUI } from './ui';
 import { Player } from './player';
 import { Physics } from './physics';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 
 // renderer
 const renderer = new THREE.WebGLRenderer();
@@ -41,25 +45,28 @@ const textureLoader = new THREE.TextureLoader();
 // Available environment maps
 const environmentMaps = {
   'Fantasy Castles': '/environmentMaps/fantasy_lands_castles_at_night.jpg',
-  'Anime Cherry Blossom': '/environmentMaps/anime_art_style_japan_streets_with_cherry_blossom_.jpg',
-  'Neon City Night': '/environmentMaps/digital_painting_neon_city_night_orange_lights_.jpg',
-  'Sci-Fi Skyscrapers': '/environmentMaps/scifi_white_sky_scrapers_in_clouds_at_day_time.jpg'
+  'Anime Cherry Blossom':
+    '/environmentMaps/anime_art_style_japan_streets_with_cherry_blossom_.jpg',
+  'Neon City Night':
+    '/environmentMaps/digital_painting_neon_city_night_orange_lights_.jpg',
+  'Sci-Fi Skyscrapers':
+    '/environmentMaps/scifi_white_sky_scrapers_in_clouds_at_day_time.jpg',
 };
 
 // Environment map settings
 const environmentSettings = {
   current: 'Fantasy Castles',
-  loadEnvironmentMap: function(mapName) {
+  loadEnvironmentMap: function (mapName) {
     if (environmentMaps[mapName]) {
       const environmentMap = textureLoader.load(environmentMaps[mapName]);
       environmentMap.mapping = THREE.EquirectangularReflectionMapping;
       environmentMap.colorSpace = THREE.SRGBColorSpace;
-      
+
       scene.background = environmentMap;
       scene.environment = environmentMap;
       this.current = mapName;
     }
-  }
+  },
 };
 
 // Load initial environment map
@@ -96,6 +103,33 @@ const world = new World();
 world.generate();
 scene.add(world);
 
+// Post-processing setup
+const composer = new EffectComposer(renderer);
+
+// Render pass - renders the scene
+const renderPass = new RenderPass(scene, orbitCamera);
+composer.addPass(renderPass);
+
+// Bloom pass - adds bloom effect
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  1.5, // strength
+  0.4, // radius
+  0.85 // threshold
+);
+composer.addPass(bloomPass);
+
+// Output pass - for proper color output
+const outputPass = new OutputPass();
+composer.addPass(outputPass);
+
+// Bloom settings object for UI controls
+const bloomSettings = {
+  strength: 1.5,
+  radius: 0.4,
+  threshold: 0.85,
+};
+
 // const axesHelper = new THREE.AxesHelper(200);
 // scene.add(axesHelper);
 
@@ -109,10 +143,13 @@ function animate() {
 
   player.applyInputs(dt);
   stats.update();
-  renderer.render(
-    scene,
-    player.controls.isLocked ? player.camera : orbitCamera
-  );
+
+  // Update the camera for the render pass
+  const activeCamera = player.controls.isLocked ? player.camera : orbitCamera;
+  renderPass.camera = activeCamera;
+
+  // Render with post-processing
+  composer.render();
 
   previousTime = currentTime;
 }
@@ -123,8 +160,9 @@ window.addEventListener('resize', () => {
   player.camera.aspect = window.innerWidth / window.innerHeight;
   player.camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
 });
 
 setupLights();
-setupUI(world, player, physics, environmentSettings);
+setupUI(world, player, physics, environmentSettings, bloomSettings, bloomPass);
 animate();
