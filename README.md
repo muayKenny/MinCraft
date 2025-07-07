@@ -4,7 +4,7 @@ An extremely minimal demo of MineCraft in Three.js : MinCraft!
 
 Built following the excellent tutorial by **Dan Greenheck** at [threejsroadmap.com](https://threejsroadmap.com/)
 
-All credit to core gameplay features to his tutorial, I have added music, a splash page, and environment maps by Skybox Labs.
+All credit to core gameplay features to his tutorial. I’ve built on top of his foundation by adding background music, a splash page, environment maps from Skybox Labs, and an initial loading state.
 
 Background music credit:
 “Crusade: Heavy Industry” by Kevin MacLeod (The Best)
