@@ -12,13 +12,13 @@ export class World extends THREE.Group {
   params = {
     seed: 0,
     terrain: {
-      scale: 30,
-      magnitude: 0.2,
+      scale: 40,
+      magnitude: 0.15,
       offset: 0.25,
       waterHeight: 5,
     },
     trees: {
-      frequency: 0.04,
+      frequency: 0.01,
       trunkHeight: {
         min: 6,
         max: 8,
@@ -32,7 +32,7 @@ export class World extends THREE.Group {
       },
     },
     clouds: {
-      density: 0.3,
+      density: 0.1,
       scale: 30,
     },
   };
@@ -44,6 +44,17 @@ export class World extends THREE.Group {
     this.loaded = false;
     this.proceduralGeneration = false;
     this.seed = seed;
+
+    document.addEventListener('keydown', (ev) => {
+      switch (ev.code) {
+        case 'F1':
+          this.save();
+          break;
+        case 'F2':
+          this.load();
+          break;
+      }
+    });
   }
 
   generate() {
@@ -325,5 +336,24 @@ export class World extends THREE.Group {
     ) {
       chunk.deleteBlockInstance(coords.block.x, coords.block.y, coords.block.z);
     }
+  }
+
+  /**
+   * Saves the world data to local storage
+   */
+  save() {
+    localStorage.setItem('minecraft_params', JSON.stringify(this.params));
+    localStorage.setItem('minecraft_data', JSON.stringify(this.dataStore.data));
+    alert('Game saved successfully');
+  }
+
+  /**
+   * Loads the game from disk
+   */
+  load() {
+    this.params = JSON.parse(localStorage.getItem('minecraft_params'));
+    this.dataStore.data = JSON.parse(localStorage.getItem('minecraft_data'));
+    alert('Game loaded successfully');
+    this.regenerate();
   }
 }
