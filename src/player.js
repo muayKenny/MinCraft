@@ -37,7 +37,8 @@ export class Player {
   /**
    * @params {THREE.scene}
    * */
-  constructor(scene) {
+  constructor(scene, audioSettings = null) {
+    this.audioSettings = audioSettings;
     this.camera.position.set(32, 52, 32);
     this.cameraHelper.visible = false;
 
@@ -56,6 +57,15 @@ export class Player {
 
     document.addEventListener('keydown', this.onKeyDown.bind(this));
     document.addEventListener('keyup', this.onKeyUp.bind(this));
+
+    this.controls.addEventListener('lock', function () {
+      console.log('locked');
+      document.getElementById('overlay').style.visibility = 'hidden';
+    });
+
+    this.controls.addEventListener('unlock', function () {
+      document.getElementById('overlay').style.visibility = 'visible';
+    });
 
     const selectionMaterial = new THREE.MeshBasicMaterial({
       color: 0xffffaa,
@@ -160,6 +170,9 @@ export class Player {
    * @param {KeyboardEvent} event
    */
   onKeyDown(event) {
+    if (!this.controls.isLocked) {
+      this.controls.lock();
+    }
     switch (event.code) {
       case 'Digit0':
       case 'Digit1':
@@ -171,6 +184,13 @@ export class Player {
       case 'Digit7':
       case 'Digit8':
       case 'Digit9':
+        // Update the selected toolbar icon
+        document
+          .getElementById(`toolbar-${this.activeBlockId}`)
+          ?.classList.remove('selected');
+        document
+          .getElementById(`toolbar-${event.key}`)
+          ?.classList.add('selected');
         this.activeBlockId = Number(event.key);
         console.log(`activeBlockId = ${event.key}`);
         break;
@@ -190,10 +210,28 @@ export class Player {
         if (this.repeat) break;
         this.position.set(32, 20, 32);
         this.velocity.set(0, 0, 0);
+        break;
+      case 'KeyM':
+        if (event.repeat) break;
+        if (this.audioSettings) {
+          if (this.audioSettings.isPlaying) {
+            this.audioSettings.pause();
+          } else {
+            this.audioSettings.play();
+          }
+        }
+        break;
       case 'Space':
         if (this.onGround) {
           this.velocity.y += this.jumpSpeed;
         }
+        break;
+      case 'Escape':
+        if (event.repeat) break;
+
+        console.log('locking controls');
+        this.controls.lock();
+
         break;
     }
   }
@@ -204,16 +242,6 @@ export class Player {
    */
   onKeyUp(event) {
     switch (event.code) {
-      case 'Escape':
-        if (event.repeat) break;
-        if (this.controls.isLocked) {
-          console.log('unlocking controls');
-          this.controls.unlock();
-        } else {
-          console.log('locking controls');
-          this.controls.lock();
-        }
-        break;
       case 'KeyW':
         this.input.z = 0;
         break;

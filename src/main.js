@@ -111,7 +111,7 @@ const audioSettings = {
 
 // Auto-play audio when user interacts with the page
 let audioStarted = false;
-let autoStart = false;
+let autoStart = true;
 function startAudio() {
   if (!audioStarted && autoStart) {
     audioSettings.play();
@@ -123,7 +123,7 @@ function startAudio() {
 document.addEventListener('click', startAudio);
 document.addEventListener('keydown', startAudio);
 
-const player = new Player(scene);
+const player = new Player(scene, audioSettings);
 const physics = new Physics(scene);
 
 function setupLights() {
