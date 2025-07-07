@@ -31,11 +31,12 @@ const orbitCamera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-orbitCamera.position.set(-32, 32, 32);
+orbitCamera.position.set(-9, 32, 32);
+
 orbitCamera.layers.enable(1);
 
 const controls = new OrbitControls(orbitCamera, renderer.domElement);
-controls.target.set(32, 0, 32);
+controls.target.set(32, 15, 52);
 controls.update();
 
 const stats = new Stats();

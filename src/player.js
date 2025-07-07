@@ -39,8 +39,8 @@ export class Player {
    * */
   constructor(scene, audioSettings = null) {
     this.audioSettings = audioSettings;
-    this.camera.position.set(32, 52, 32);
-    this.camera.rotation.y = -Math.PI * 0.4;
+    this.camera.position.set(40, 30, 27);
+    this.camera.rotation.y = -Math.PI / 2;
     this.cameraHelper.visible = false;
 
     scene.add(this.camera);
@@ -210,7 +210,7 @@ export class Player {
         break;
       case 'KeyR':
         if (this.repeat) break;
-        this.position.set(32, 20, 32);
+        this.position.set(50, 11, 27);
         this.velocity.set(0, 0, 0);
         break;
       case 'KeyM':
