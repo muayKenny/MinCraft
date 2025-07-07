@@ -37,8 +37,9 @@ export class Player {
   /**
    * @params {THREE.scene}
    * */
-  constructor(scene, audioSettings = null) {
+  constructor(scene, audioSettings = null, gameStarted = null) {
     this.audioSettings = audioSettings;
+    this.gameStarted = gameStarted;
     this.camera.position.set(40, 30, 27);
     this.camera.rotation.y = -Math.PI / 2;
     this.cameraHelper.visible = false;
@@ -171,6 +172,11 @@ export class Player {
    * @param {KeyboardEvent} event
    */
   onKeyDown(event) {
+    // Only allow input after game has started
+    if (this.gameStarted && !this.gameStarted.value) {
+      return;
+    }
+
     if (!this.controls.isLocked && event.code !== 'Escape') {
       this.controls.lock();
     }
@@ -236,6 +242,11 @@ export class Player {
    * @param {KeyboardEvent} event
    */
   onKeyUp(event) {
+    // Only allow input after game has started
+    if (this.gameStarted && !this.gameStarted.value) {
+      return;
+    }
+
     switch (event.code) {
       case 'Escape':
         if (event.repeat) return;

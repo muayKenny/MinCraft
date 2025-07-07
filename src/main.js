@@ -124,7 +124,10 @@ function startAudio() {
 document.addEventListener('click', startAudio);
 document.addEventListener('keydown', startAudio);
 
-const player = new Player(scene, audioSettings);
+// Create a reference object for gameStarted so it can be passed by reference
+const gameStartedRef = { value: false };
+
+const player = new Player(scene, audioSettings, gameStartedRef);
 const physics = new Physics(scene);
 
 function setupLights() {
@@ -251,6 +254,7 @@ function initializeGame() {
   if (gameStarted) return;
 
   gameStarted = true;
+  gameStartedRef.value = true;
 
   // Hide menu and show game
   document.getElementById('main-menu').style.display = 'none';
