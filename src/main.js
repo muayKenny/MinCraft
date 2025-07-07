@@ -151,7 +151,6 @@ function setupLights() {
 }
 
 const world = new World();
-world.generate();
 scene.add(world);
 
 // Post-processing setup
@@ -256,6 +255,9 @@ function initializeGame() {
   document.getElementById('main-menu').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('app').appendChild(renderer.domElement);
+
+  // Generate world with initial data
+  world.generate();
 
   setupLights();
   setupUI(

@@ -40,6 +40,7 @@ export class Player {
   constructor(scene, audioSettings = null) {
     this.audioSettings = audioSettings;
     this.camera.position.set(32, 52, 32);
+    this.camera.rotation.y = -Math.PI * 0.4;
     this.cameraHelper.visible = false;
 
     scene.add(this.camera);
@@ -170,9 +171,10 @@ export class Player {
    * @param {KeyboardEvent} event
    */
   onKeyDown(event) {
-    if (!this.controls.isLocked) {
+    if (!this.controls.isLocked && event.code !== 'Escape') {
       this.controls.lock();
     }
+
     switch (event.code) {
       case 'Digit0':
       case 'Digit1':
@@ -226,13 +228,6 @@ export class Player {
           this.velocity.y += this.jumpSpeed;
         }
         break;
-      case 'Escape':
-        if (event.repeat) break;
-
-        console.log('locking controls');
-        this.controls.lock();
-
-        break;
     }
   }
 
@@ -242,6 +237,15 @@ export class Player {
    */
   onKeyUp(event) {
     switch (event.code) {
+      case 'Escape':
+        if (event.repeat) return;
+        // Only unlock if currently locked
+        if (this.controls.isLocked) {
+          this.controls.unlock();
+        } else {
+          this.controls.lock();
+        }
+        break;
       case 'KeyW':
         this.input.z = 0;
         break;

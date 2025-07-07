@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { WorldChunk } from './worldChunk';
 import { DataStore } from './dataStore';
+import initialData from './initial.json' assert { type: 'json' };
 
 export class World extends THREE.Group {
   asyncLoading = true; // If true, chunks will be generated in the background
@@ -12,7 +13,7 @@ export class World extends THREE.Group {
   params = {
     seed: 0,
     terrain: {
-      scale: 40,
+      scale: 60,
       magnitude: 0.15,
       offset: 0.25,
       waterHeight: 5,
@@ -59,6 +60,7 @@ export class World extends THREE.Group {
 
   generate() {
     this.dataStore.clear();
+    this.loadInitialWorld();
     this.disposeChunks();
     for (let x = -1; x <= 1; x++) {
       for (let z = -1; z <= 1; z++) {
@@ -350,6 +352,43 @@ export class World extends THREE.Group {
   /**
    * Loads the game from disk
    */
+  /**
+   * Loads the initial world data from initial.json
+   */
+  loadInitialWorld() {
+    this.dataStore.data = initialData;
+    console.log('Initial world loaded from bundled JSON');
+  }
+
+  /**
+   * Regenerates the world with current data
+   */
+  regenerate() {
+    this.disposeChunks();
+    for (let x = -1; x <= 1; x++) {
+      for (let z = -1; z <= 1; z++) {
+        const chunk = new WorldChunk(
+          this.chunkSize,
+          this.params,
+          this.dataStore
+        );
+        chunk.position.set(
+          x * this.chunkSize.width,
+          0,
+          z * this.chunkSize.width
+        );
+        chunk.generate();
+        chunk.userData = {
+          x,
+          z,
+        };
+        this.add(chunk);
+      }
+    }
+    this.chunk = this.children[0];
+    this.loaded = true;
+  }
+
   load() {
     this.params = JSON.parse(localStorage.getItem('minecraft_params'));
     this.dataStore.data = JSON.parse(localStorage.getItem('minecraft_data'));
