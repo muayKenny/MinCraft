@@ -249,9 +249,26 @@ window.addEventListener('resize', () => {
   composer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// Mobile detection function
+function isMobile() {
+  return (
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    ) ||
+    window.innerWidth <= 768 ||
+    'ontouchstart' in window
+  );
+}
+
 // Game initialization function
 function initializeGame() {
   if (gameStarted) return;
+
+  // Check if on mobile device
+  if (isMobile()) {
+    alert('Experience Must Be Viewed on Desktop (for now!)');
+    return;
+  }
 
   gameStarted = true;
   gameStartedRef.value = true;
