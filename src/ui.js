@@ -74,6 +74,23 @@ export function setupUI(
   // worldFolder
   //   .add(world, 'proceduralGeneration', false)
   //   .name('Procedural Generation');
+  const treesFolder = worldFolder.addFolder('Trees');
+  treesFolder.add(world.params.trees, 'frequency', 0, 0.1).name('Frequency');
+  treesFolder
+    .add(world.params.trees.trunkHeight, 'min', 0, 10, 1)
+    .name('Min Trunk Height');
+  treesFolder
+    .add(world.params.trees.trunkHeight, 'max', 0, 10, 1)
+    .name('Max Trunk Height');
+  treesFolder
+    .add(world.params.trees.canopy.size, 'min', 0, 10, 1)
+    .name('Min Canopy Size');
+  treesFolder
+    .add(world.params.trees.canopy.size, 'max', 0, 10, 1)
+    .name('Max Canopy Size');
+  treesFolder
+    .add(world.params.trees.canopy, 'density', 0, 1)
+    .name('Canopy Density');
   worldFolder.close();
 
   const terrainFolder = worldFolder.addFolder('Terrain');
@@ -94,6 +111,7 @@ export function setupUI(
     resourceFolder.close();
   }
   resourcesFolder.close();
+
   // Bloom post-processing folder
   const bloomFolder = gui.addFolder('Bloom');
   bloomFolder
